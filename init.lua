@@ -1,3 +1,5 @@
+-- ============ UTILITY ============
+
 function dump(o)
    if type(o) == 'table' then
       local s = '{ '
@@ -19,10 +21,12 @@ end
 
 hs.application.enableSpotlightForNameSearches(true)
 
+-- ============ RELOAD ============
 hs.loadSpoon("ReloadConfiguration")
 spoon.ReloadConfiguration:start()
 hs.alert.show("Config loaded")
 
+-- ============ BASICS ============
 hs.hotkey.bind({"alt"}, "f", function()
     local win = hs.window.focusedWindow()
     local f = win:frame()
@@ -43,6 +47,7 @@ hs.hotkey.bind({"alt"}, "q", function()
     app:kill()
 end)
 
+-- ============ WINDOW SWITCHING ============
 function centerMouseOnWindow(window)
   local pt = hs.geometry.rectMidPoint(window:frame())
   hs.mouse.absolutePosition(pt)
@@ -79,6 +84,8 @@ hs.hotkey.bind("alt", "h", function() focusWindowN(1) end)
 hs.hotkey.bind("alt", "t", function() focusWindowN(-1) end)
 
 
+-- ============ LAYOUTS ============
+
 function layouts()
   return {
     {},
@@ -109,23 +116,65 @@ function layouts()
   }
 end
 
-function hideAll(exceptions)
-  local st = Set(exceptions)
-  for _, app in ipairs(hs.application.runningApplications()) do
-    local app_name = app:name()
-    if not app:isHidden() and not st[app_name] then
-      print('Hiding ', app_name)
-      app:hide()
+spaceRegistry = {}
+
+function initSpaces()
+  for _, screen in ipairs(hs.screen.allScreens()) do
+    local id = screen:getUUID()
+    local spaces = hs.spaces.spacesForScreen(id)
+    local diff = #layouts() - #spaces
+    for i = 1,diff do
+      hs.spaces.addSpaceToScreen(id)
+    end
+
+    local spaces = hs.spaces.spacesForScreen(id)
+    for i, space in ipairs(spaces) do
+      print(space)
+      if not spaceRegistry[id] then
+        spaceRegistry[id] = {}
+      end
+      spaceRegistry[id][i] = space
     end
   end
 end
 
-screenLayouts = {}
-for i, screen in ipairs(hs.screen.allScreens()) do
-  screenLayouts[screen:getUUID()] = i
+function moveWindowsToSpaces()
+  local running_apps = hs.application.runningApplications()
+
+  for i, layout in ipairs(layouts()) do
+    for _, screen in ipairs(hs.screen.allScreens()) do
+      local screenid = screen:getUUID()
+
+      for _, appname in ipairs(layout) do
+        for _, app in ipairs(running_apps) do
+
+          if app:name() == appname then
+            local windows = app:allWindows()
+
+            for _, win in ipairs(windows) do
+              local spaceid = spaceRegistry[screenid][i]
+              print(win)
+              print(spaceid)
+              hs.spaces.moveWindowToSpace(win, spaceid)
+            end
+          end
+        end
+      end
+    end
+  end
 end
 
-function changeLayout(idx)
+initSpaces()
+moveWindowsToSpaces()
+
+ftr = hs.window.filter.new(true)
+ftr:subscribe(hs.window.filter.windowCreated, moveWindowsToSpaces)
+
+print(dump(spaceRegistry))
+
+currentLayout = 1
+
+function changeToSpace(idx)
   if idx < 0 then
     idx = 10
   end
@@ -134,42 +183,50 @@ function changeLayout(idx)
     idx = 0
   end
 
-  print("========================")
+  currentLayout = idx
 
   local screen = hs.screen.mainScreen():getUUID()
-  screenLayouts[screen] = idx
-  local layout = layouts()[idx]
+  local space = spaceRegistry[screen][idx]
+  hs.spaces.gotoSpace(space)
+end
 
-  print("Setting index ", idx)
-  print("Screen ", screen)
-  print("Layout count", #layout)
-  print("Layout ", dump(layout))
-
-  hideAll(layout)
-
-  for _, app in ipairs(layout) do
-    if hs.application.find(app) then
-      print("Focusing ", app)
-      hs.application.launchOrFocus(app)
-    end
+function moveToSpace(idx)
+  if idx < 0 then
+    idx = 10
   end
-end
 
-function currentLayout()
+  if idx > #layouts() then
+    idx = 0
+  end
+
+  currentLayout = idx
+
   local screen = hs.screen.mainScreen():getUUID()
-  return screenLayouts[screen]
+  local space = spaceRegistry[screen][idx]
+  hs.spaces.moveWindowToSpace(hs.window.focusedWindow(), space)
 end
 
-hs.hotkey.bind("alt", "d", function() changeLayout(currentLayout() - 1)  end)
-hs.hotkey.bind("alt", "n", function() changeLayout(currentLayout() + 1)  end)
+hs.hotkey.bind("alt", "d", function() changeToSpace(currentLayout - 1)  end)
+hs.hotkey.bind("alt", "n", function() changeToSpace(currentLayout + 1)  end)
 
-hs.hotkey.bind("alt", "&", function() changeLayout(1)  end)
-hs.hotkey.bind("alt", "[", function() changeLayout(2)  end)
-hs.hotkey.bind("alt", "{", function() changeLayout(3)  end)
-hs.hotkey.bind("alt", "}", function() changeLayout(4)  end)
-hs.hotkey.bind("alt", "(", function() changeLayout(5)  end)
-hs.hotkey.bind("alt", "=", function() changeLayout(6)  end)
-hs.hotkey.bind("alt", "*", function() changeLayout(7)  end)
-hs.hotkey.bind("alt", ")", function() changeLayout(8)  end)
-hs.hotkey.bind("alt", "+", function() changeLayout(9)  end)
-hs.hotkey.bind("alt", "]", function() changeLayout(10) end)
+hs.hotkey.bind("alt", "&", function() changeToSpace(1)  end)
+hs.hotkey.bind("alt", "[", function() changeToSpace(2)  end)
+hs.hotkey.bind("alt", "{", function() changeToSpace(3)  end)
+hs.hotkey.bind("alt", "}", function() changeToSpace(4)  end)
+hs.hotkey.bind("alt", "(", function() changeToSpace(5)  end)
+hs.hotkey.bind("alt", "=", function() changeToSpace(6)  end)
+hs.hotkey.bind("alt", "*", function() changeToSpace(7)  end)
+hs.hotkey.bind("alt", ")", function() changeToSpace(8)  end)
+hs.hotkey.bind("alt", "+", function() changeToSpace(9)  end)
+hs.hotkey.bind("alt", "]", function() changeToSpace(10) end)
+
+hs.hotkey.bind({"ctrl", "alt"}, "&", function() moveToSpace(1)  end)
+hs.hotkey.bind({"ctrl", "alt"}, "[", function() moveToSpace(2)  end)
+hs.hotkey.bind({"ctrl", "alt"}, "{", function() moveToSpace(3)  end)
+hs.hotkey.bind({"ctrl", "alt"}, "}", function() moveToSpace(4)  end)
+hs.hotkey.bind({"ctrl", "alt"}, "(", function() moveToSpace(5)  end)
+hs.hotkey.bind({"ctrl", "alt"}, "=", function() moveToSpace(6)  end)
+hs.hotkey.bind({"ctrl", "alt"}, "*", function() moveToSpace(7)  end)
+hs.hotkey.bind({"ctrl", "alt"}, ")", function() moveToSpace(8)  end)
+hs.hotkey.bind({"ctrl", "alt"}, "+", function() moveToSpace(9)  end)
+hs.hotkey.bind({"ctrl", "alt"}, "]", function() moveToSpace(10) end)
