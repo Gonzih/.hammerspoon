@@ -55,6 +55,11 @@ end
 
 
 focusIndex = 1
+
+function resetFocus()
+  focusIndex = 1
+end
+
 function focusWindowN(n)
   focusIndex = focusIndex + n
   local wins = hs.window.visibleWindows()
@@ -175,12 +180,14 @@ print(dump(spaceRegistry))
 currentLayout = 1
 
 function changeToSpace(idx)
+  resetFocus()
+
   if idx < 0 then
     idx = 10
   end
 
   if idx > #layouts() then
-    idx = 0
+    idx = 1
   end
 
   currentLayout = idx
