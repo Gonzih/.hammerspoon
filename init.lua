@@ -53,19 +53,23 @@ focusIndex = 1
 function focusWindowN(n)
   focusIndex = focusIndex + n
   local wins = hs.window.visibleWindows()
-  print("Got # visible windows ", #wins)
+  -- print("Visible windows == ", #wins)
 
-  if focusIndex >= #wins then
+  if focusIndex > #wins then
     focusIndex = 1
   end
 
   if focusIndex < 1 then
-    focusIndex = #wins - 1
+    focusIndex = #wins
   end
 
   for i, win in ipairs(wins) do
-    if i == focusIndex then
+    print(win)
+    print(i)
+
+    if i == focusIndex and win then
       win:focus()
+      -- print("Focusing window #", i)
       centerMouseOnWindow(win)
     end
   end
@@ -75,12 +79,7 @@ hs.hotkey.bind("alt", "h", function() focusWindowN(1) end)
 hs.hotkey.bind("alt", "t", function() focusWindowN(-1) end)
 
 
-screenLayouts = {}
-for i, screen in ipairs(hs.screen.allScreens()) do
-  screenLayouts[screen:getUUID()] = i
-end
-
-function layouts(screen)
+function layouts()
   return {
     {},
     {
@@ -91,8 +90,11 @@ function layouts(screen)
     },
     {
       "Telegram Desktop",
+      "Signal",
     },
-    {},
+    {
+      "Notion",
+    },
     {},
     {},
     {
@@ -118,18 +120,33 @@ function hideAll(exceptions)
   end
 end
 
-currentLayout = 1
+screenLayouts = {}
+for i, screen in ipairs(hs.screen.allScreens()) do
+  screenLayouts[screen:getUUID()] = i
+end
+
 function changeLayout(idx)
+  if idx < 0 then
+    idx = 10
+  end
+
+  if idx > #layouts() then
+    idx = 0
+  end
+
   print("========================")
-  currentLayout = idx
+
   local screen = hs.screen.mainScreen():getUUID()
-  local layout = layouts(screen)[idx]
+  screenLayouts[screen] = idx
+  local layout = layouts()[idx]
+
   print("Setting index ", idx)
   print("Screen ", screen)
   print("Layout count", #layout)
   print("Layout ", dump(layout))
-  screenLayouts[screen] = idx
+
   hideAll(layout)
+
   for _, app in ipairs(layout) do
     if hs.application.find(app) then
       print("Focusing ", app)
@@ -138,8 +155,13 @@ function changeLayout(idx)
   end
 end
 
-hs.hotkey.bind("alt", "d", function() changeLayout(currentLayout - 1)  end)
-hs.hotkey.bind("alt", "n", function() changeLayout(currentLayout + 1)  end)
+function currentLayout()
+  local screen = hs.screen.mainScreen():getUUID()
+  return screenLayouts[screen]
+end
+
+hs.hotkey.bind("alt", "d", function() changeLayout(currentLayout() - 1)  end)
+hs.hotkey.bind("alt", "n", function() changeLayout(currentLayout() + 1)  end)
 
 hs.hotkey.bind("alt", "&", function() changeLayout(1)  end)
 hs.hotkey.bind("alt", "[", function() changeLayout(2)  end)
