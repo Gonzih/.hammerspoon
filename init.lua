@@ -130,6 +130,7 @@ function initSpaces()
     local diff = #layouts() - #spaces
     for i = 1,diff do
       hs.spaces.addSpaceToScreen(id)
+      hs.timer.usleep(1000000)
     end
 
     local spaces = hs.spaces.spacesForScreen(id)
