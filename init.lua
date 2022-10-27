@@ -111,9 +111,6 @@ function resetFocus()
   focusIndex = 1
 end
 
--- ftr = hs.window.filter.new(true)
--- ftr:subscribe(hs.window.filter.windowCreated, resetFilter)
-
 function focusWindowN(n)
   print('========= FOCUS WINDOW =========')
 
@@ -280,7 +277,7 @@ registerSpaces()
 moveWindowsToSpaces()
 
 ftr = hs.window.filter.new(true)
-ftr:subscribe(hs.window.filter.windowCreated, moveWindowsToSpaces)
+-- ftr:subscribe(hs.window.filter.windowCreated, moveWindowsToSpaces)
 
 currentLayout = 1
 
@@ -341,6 +338,30 @@ hs.hotkey.bind({"ctrl", "alt"}, ")", function() moveToSpace(8)  end)
 hs.hotkey.bind({"ctrl", "alt"}, "+", function() moveToSpace(9)  end)
 hs.hotkey.bind({"ctrl", "alt"}, "]", function() moveToSpace(10) end)
 
+function targetSpace(id)
+  local screen = builtinDisplay()
+  for i = 2,id do
+    screen = screen:next()
+  end
+  return hs.spaces.activeSpaceOnScreen(screen:getUUID())
+end
+
+function focusScreen(id)
+  local fspace = targetSpace(id)
+  hs.alert.show("Focus space " .. fspace .. " with id " .. id)
+  hs.spaces.gotoSpace(fspace)
+end
+
+function moveToScreen(id)
+  local fspace = targetSpace(id)
+  hs.alert.show("Focus space " .. fspace .. " with id " .. id)
+  hs.spaces.moveWindowToSpace(hs.window.focusedWindow(), fspace)
+end
+
 hs.hotkey.bind("alt", ";", function() focusScreen(1)  end)
 hs.hotkey.bind("alt", ",", function() focusScreen(2)  end)
 hs.hotkey.bind("alt", ".", function() focusScreen(3)  end)
+
+hs.hotkey.bind({"ctrl", "alt"}, ";", function() moveToScreen(1)  end)
+hs.hotkey.bind({"ctrl", "alt"}, ",", function() moveToScreen(2)  end)
+hs.hotkey.bind({"ctrl", "alt"}, ".", function() moveToScreen(3)  end)
