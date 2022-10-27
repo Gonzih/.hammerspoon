@@ -60,10 +60,29 @@ function resetFocus()
   focusIndex = 1
 end
 
+-- ftr = hs.window.filter.new(true)
+-- ftr:subscribe(hs.window.filter.windowCreated, resetFilter)
+
 function focusWindowN(n)
+  print('========= FOCUS WINDOW =========')
+
+  local spaceFilter = hs.window.filter.default
+    :setAppFilter('Hammerspoon',{visible=true, allowTitles=1, rejectTitles="Hammerspoon"})
+    :setAppFilter('Finder',{visible=true})
+    :setSortOrder(hs.window.filter.sortByCreated)
+    :setCurrentSpace(true)
+
+  local wins = spaceFilter:getWindows()
   focusIndex = focusIndex + n
-  local wins = hs.window.visibleWindows()
   -- print("Visible windows == ", #wins)
+
+  print("Got windows filtered")
+  print('========================')
+  for i, win in ipairs(wins) do
+    local name = win:application():name()
+    print(name)
+  end
+  print('========================')
 
   if focusIndex > #wins then
     focusIndex = 1
@@ -74,12 +93,12 @@ function focusWindowN(n)
   end
 
   for i, win in ipairs(wins) do
-    print(win)
-    print(i)
+    local name = win:application():name()
+    print("i -> name ", i, name)
 
     if i == focusIndex and win then
+      print("Focusing window #", focusIndex, name)
       win:focus()
-      -- print("Focusing window #", i)
       centerMouseOnWindow(win)
     end
   end
@@ -183,8 +202,6 @@ print(dump(spaceRegistry))
 currentLayout = 1
 
 function changeToSpace(idx)
-  resetFocus()
-
   if idx < 0 then
     idx = 10
   end
@@ -195,10 +212,14 @@ function changeToSpace(idx)
 
   currentLayout = idx
 
+  print("Go to space #", currentLayout)
   local screen = hs.screen.mainScreen():getUUID()
   local space = spaceRegistry[screen][idx]
   hs.spaces.gotoSpace(space)
 end
+
+-- TODO extract space ids from this, sort em by name of space
+print(dump(hs.spaces.missionControlSpaceNames()))
 
 function moveToSpace(idx)
   if idx < 0 then
@@ -209,11 +230,13 @@ function moveToSpace(idx)
     idx = 0
   end
 
-  currentLayout = idx
-
+  print("Move to space #", idx)
   local screen = hs.screen.mainScreen():getUUID()
   local space = spaceRegistry[screen][idx]
   hs.spaces.moveWindowToSpace(hs.window.focusedWindow(), space)
+
+  -- resetFocus()
+  -- focusWindowN(0)
 end
 
 hs.hotkey.bind("alt", "d", function() changeToSpace(currentLayout - 1)  end)
