@@ -1,5 +1,15 @@
 -- ============ UTILITY ============
 
+-- dictionary length, only way to get it
+function dlen(map)
+  local l = 0
+  for _, _ in pairs(map) do
+    l = l + 1
+  end
+
+  return l
+end
+
 function dump(o)
    if type(o) == 'table' then
       local s = '{ '
@@ -214,26 +224,30 @@ function registerSpaces()
     end
   end
 
+
   print(dump(spaceRegistry))
+  for id, spaces in pairs(hs.spaces.missionControlSpaceNames()) do
+    print(id, "has #", dlen(spaces), "spaces")
+  end
 
   print("------------END SPACES-------------")
 end
 
 function initSpaces()
+  local limit = 10
   print("Init spaces")
+  local spaces = hs.spaces.missionControlSpaceNames()
+  print(dump(spaces))
 
-  local screen = builtinDisplay()
-  local id = screen:getUUID()
-  local spaces = hs.spaces.spacesForScreen(id)
-  if not spaces then
-    spaces = {}
-  end
-  local diff = #layouts() - #spaces
+  for id, screenSpaces in pairs(spaces) do
+    local diff = limit - dlen(screenSpaces)
 
-  print("Need to create #", diff, " spaces")
-  for i = 1,diff do
-    hs.spaces.addSpaceToScreen(id)
-    hs.timer.usleep(1000000)
+    print("Need to create #", diff, " spaces for ", id)
+    for i = 1,diff do
+      print("Creating space on ", id)
+      hs.spaces.addSpaceToScreen(id)
+      hs.timer.usleep(1000000)
+    end
   end
 end
 
@@ -300,9 +314,6 @@ function moveToSpace(idx)
   local screen = hs.screen.mainScreen():getUUID()
   local space = spaceRegistry[screen][idx]
   hs.spaces.moveWindowToSpace(hs.window.focusedWindow(), space)
-
-  -- resetFocus()
-  -- focusWindowN(0)
 end
 
 hs.hotkey.bind("alt", "d", function() changeToSpace(currentLayout - 1)  end)
@@ -329,3 +340,7 @@ hs.hotkey.bind({"ctrl", "alt"}, "*", function() moveToSpace(7)  end)
 hs.hotkey.bind({"ctrl", "alt"}, ")", function() moveToSpace(8)  end)
 hs.hotkey.bind({"ctrl", "alt"}, "+", function() moveToSpace(9)  end)
 hs.hotkey.bind({"ctrl", "alt"}, "]", function() moveToSpace(10) end)
+
+hs.hotkey.bind("alt", ";", function() focusScreen(1)  end)
+hs.hotkey.bind("alt", ",", function() focusScreen(2)  end)
+hs.hotkey.bind("alt", ".", function() focusScreen(3)  end)
