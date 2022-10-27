@@ -28,6 +28,10 @@ end)
 hs.alert.show("Config loaded")
 
 -- ============ BASICS ============
+function builtinDisplay()
+  return hs.screen.find("built.in retina display")
+end
+
 function visibleSpaceWindowsFilter()
   return hs.window.filter.default
       :setAppFilter('Hammerspoon',{visible=true, allowTitles=1, rejectTitles="Hammerspoon"})
@@ -135,6 +139,8 @@ function focusWindowN(n)
       centerMouseOnWindow(win)
     end
   end
+
+  print('========= END FOCUS WINDOW =========')
 end
 
 hs.hotkey.bind("alt", "h", function() focusWindowN(1) end)
@@ -176,12 +182,9 @@ end
 spaceRegistry = {}
 
 function registerSpaces()
-  -- TODO extract space ids from this, sort em by name of space
   local spaces = hs.spaces.missionControlSpaceNames()
-  print("SPACES")
-  print(dump(spaces))
 
-  print("-------------------------------")
+  print("------------SPACES-------------")
 
   for screenID, screenSpaces in pairs(spaces) do
     local spaceNames = {}
@@ -201,7 +204,6 @@ function registerSpaces()
 
     for i, spaceName in ipairs(spaceNames) do
       local space = spaceNameToID[spaceName]
-      print(spaceName, " is ",  space)
 
       if not spaceRegistry[screenID] then
         spaceRegistry[screenID] = {}
@@ -214,19 +216,24 @@ function registerSpaces()
 
   print(dump(spaceRegistry))
 
-  print("-------------------------------")
+  print("------------END SPACES-------------")
 end
 
 function initSpaces()
-  for _, screen in ipairs(hs.screen.allScreens()) do
-    local id = screen:getUUID()
-    local spaces = hs.spaces.spacesForScreen(id)
-    local diff = #layouts() - #spaces
+  print("Init spaces")
 
-    for i = 1,diff do
-      hs.spaces.addSpaceToScreen(id)
-      hs.timer.usleep(1000000)
-    end
+  local screen = builtinDisplay()
+  local id = screen:getUUID()
+  local spaces = hs.spaces.spacesForScreen(id)
+  if not spaces then
+    spaces = {}
+  end
+  local diff = #layouts() - #spaces
+
+  print("Need to create #", diff, " spaces")
+  for i = 1,diff do
+    hs.spaces.addSpaceToScreen(id)
+    hs.timer.usleep(1000000)
   end
 end
 
@@ -234,20 +241,19 @@ function moveWindowsToSpaces()
   local running_apps = hs.application.runningApplications()
 
   for i, layout in ipairs(layouts()) do
-    for _, screen in ipairs(hs.screen.allScreens()) do
-      local screenid = screen:getUUID()
+    local screen = builtinDisplay()
+    local screenid = screen:getUUID()
 
-      for _, appname in ipairs(layout) do
-        for _, app in ipairs(running_apps) do
+    for _, appname in ipairs(layout) do
+      for _, app in ipairs(running_apps) do
 
-          if app:name() == appname then
-            local windows = app:allWindows()
+        if app:name() == appname then
+          local windows = app:allWindows()
 
-            for _, win in ipairs(windows) do
-              local spaceid = spaceRegistry[screenid][i]
-              print(win:application():name(), spaceid)
-              hs.spaces.moveWindowToSpace(win, spaceid)
-            end
+          for _, win in ipairs(windows) do
+            local spaceid = spaceRegistry[screenid][i]
+            print("Moving ", win:application():name(), spaceid)
+            hs.spaces.moveWindowToSpace(win, spaceid)
           end
         end
       end
@@ -261,8 +267,6 @@ moveWindowsToSpaces()
 
 ftr = hs.window.filter.new(true)
 ftr:subscribe(hs.window.filter.windowCreated, moveWindowsToSpaces)
-
-print(dump(spaceRegistry))
 
 currentLayout = 1
 
