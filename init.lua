@@ -139,7 +139,9 @@ function initSpaces()
       if not spaceRegistry[id] then
         spaceRegistry[id] = {}
       end
-      spaceRegistry[id][i] = space
+      if not spaceRegistry[id][i] then
+        spaceRegistry[id][i] = space
+      end
     end
   end
 end
