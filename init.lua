@@ -22,9 +22,11 @@ end
 hs.application.enableSpotlightForNameSearches(true)
 
 -- ============ RELOAD ============
-hs.loadSpoon("ReloadConfiguration")
-spoon.ReloadConfiguration:start()
+hs.hotkey.bind({"alt", "ctrl"}, "R", function()
+  hs.reload()
+end)
 hs.alert.show("Config loaded")
+
 
 -- ============ BASICS ============
 hs.hotkey.bind({"alt"}, "f", function()
@@ -142,25 +144,57 @@ end
 
 spaceRegistry = {}
 
+function registerSpaces()
+  -- TODO extract space ids from this, sort em by name of space
+  local spaces = hs.spaces.missionControlSpaceNames()
+  print("SPACES")
+  print(dump(spaces))
+
+  print("-------------------------------")
+
+  for screenID, screenSpaces in pairs(spaces) do
+    local spaceNames = {}
+    local spaceNameToID = {}
+    print(screenID)
+
+    for spaceID, spaceName in pairs(screenSpaces) do
+      local name = spaceName:gsub("[a-zA-Z ]*", "")
+      name = tonumber(name)
+      table.insert(spaceNames, name)
+      spaceNameToID[name] = spaceID
+    end
+
+    table.sort(spaceNames)
+    print(dump(spaceNames))
+    print(dump(spaceNameToID))
+
+    for i, spaceName in ipairs(spaceNames) do
+      local space = spaceNameToID[spaceName]
+      print(spaceName, " is ",  space)
+
+      if not spaceRegistry[screenID] then
+        spaceRegistry[screenID] = {}
+      end
+      if not spaceRegistry[screenID][i] then
+        spaceRegistry[screenID][i] = space
+      end
+    end
+  end
+
+  print(dump(spaceRegistry))
+
+  print("-------------------------------")
+end
+
 function initSpaces()
   for _, screen in ipairs(hs.screen.allScreens()) do
     local id = screen:getUUID()
     local spaces = hs.spaces.spacesForScreen(id)
     local diff = #layouts() - #spaces
+
     for i = 1,diff do
       hs.spaces.addSpaceToScreen(id)
       hs.timer.usleep(1000000)
-    end
-
-    local spaces = hs.spaces.spacesForScreen(id)
-    for i, space in ipairs(spaces) do
-      print(space)
-      if not spaceRegistry[id] then
-        spaceRegistry[id] = {}
-      end
-      if not spaceRegistry[id][i] then
-        spaceRegistry[id][i] = space
-      end
     end
   end
 end
@@ -180,8 +214,7 @@ function moveWindowsToSpaces()
 
             for _, win in ipairs(windows) do
               local spaceid = spaceRegistry[screenid][i]
-              print(win)
-              print(spaceid)
+              print(win:application():name(), spaceid)
               hs.spaces.moveWindowToSpace(win, spaceid)
             end
           end
@@ -192,6 +225,7 @@ function moveWindowsToSpaces()
 end
 
 initSpaces()
+registerSpaces()
 moveWindowsToSpaces()
 
 ftr = hs.window.filter.new(true)
@@ -217,9 +251,6 @@ function changeToSpace(idx)
   local space = spaceRegistry[screen][idx]
   hs.spaces.gotoSpace(space)
 end
-
--- TODO extract space ids from this, sort em by name of space
-print(dump(hs.spaces.missionControlSpaceNames()))
 
 function moveToSpace(idx)
   if idx < 0 then
