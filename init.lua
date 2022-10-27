@@ -27,8 +27,15 @@ hs.hotkey.bind({"alt", "ctrl"}, "R", function()
 end)
 hs.alert.show("Config loaded")
 
-
 -- ============ BASICS ============
+function visibleSpaceWindowsFilter()
+  return hs.window.filter.default
+      :setAppFilter('Hammerspoon',{visible=true, allowTitles=1, rejectTitles="Hammerspoon"})
+      :setAppFilter('Finder',{visible=true})
+      :setSortOrder(hs.window.filter.sortByCreated)
+      :setCurrentSpace(true)
+end
+
 hs.hotkey.bind({"alt"}, "f", function()
     local win = hs.window.focusedWindow()
     local f = win:frame()
@@ -40,6 +47,7 @@ hs.hotkey.bind({"alt"}, "f", function()
     f.w = max.w
     f.h = max.h
     win:setFrame(f)
+    hs.alert.show("Fullscreen " .. win:application():name())
 end)
 
 hs.hotkey.bind("alt", "return", function() hs.application.launchOrFocus("Terminal") end)
@@ -47,6 +55,33 @@ hs.hotkey.bind("alt", "return", function() hs.application.launchOrFocus("Termina
 hs.hotkey.bind({"alt"}, "q", function()
     local app = hs.application.frontmostApplication()
     app:kill()
+end)
+
+-- ============ TILING ============
+
+allFullscreen = true
+
+hs.hotkey.bind({"alt"}, "space", function()
+    allFullscreen = not allFullscreen
+    local wf = visibleSpaceWindowsFilter()
+    local windows = wf:getWindows()
+    local screen = hs.screen.mainScreen()
+    local max = screen:frame()
+
+    if allFullscreen then
+      for _, win in ipairs(windows) do
+        local f = win:frame()
+        f.x = max.x
+        f.y = max.y
+        f.w = max.w
+        f.h = max.h
+        win:setFrame(f)
+      end
+      hs.alert.show("Fullscreen all")
+    else
+      hs.window.tiling.tileWindows(windows, max)
+      hs.alert.show("Tiling")
+    end
 end)
 
 -- ============ WINDOW SWITCHING ============
@@ -68,11 +103,7 @@ end
 function focusWindowN(n)
   print('========= FOCUS WINDOW =========')
 
-  local spaceFilter = hs.window.filter.default
-    :setAppFilter('Hammerspoon',{visible=true, allowTitles=1, rejectTitles="Hammerspoon"})
-    :setAppFilter('Finder',{visible=true})
-    :setSortOrder(hs.window.filter.sortByCreated)
-    :setCurrentSpace(true)
+  local spaceFilter = visibleSpaceWindowsFilter()
 
   local wins = spaceFilter:getWindows()
   focusIndex = focusIndex + n
