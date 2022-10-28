@@ -385,9 +385,11 @@ function focusScreen(n)
 end
 
 function moveToScreen(n)
+  local screen = getDisplay(n)
   local fspace = targetSpace(n)
-  hs.alert.show("Focus space " .. fspace .. " with n " .. n)
-  hs.spaces.moveWindowToSpace(hs.window.focusedWindow(), fspace)
+  local win = hs.window.focusedWindow()
+  hs.alert.show("Move win " .. win:title() .. " to " .. screen:name())
+  hs.spaces.moveWindowToSpace(win, fspace)
 end
 
 hs.hotkey.bind("alt", ";", function() focusScreen(1)  end)
