@@ -300,7 +300,18 @@ hs.hotkey.bind({"alt", "ctrl"}, "M", function()
     moveWindowsToSpaces()
 end)
 
-currentLayout = 1
+currentLayout = {}
+for _, screen in ipairs(hs.screen.allScreens()) do
+  currentLayout[screen:getUUID()] = 1
+end
+
+function layoutForCurrentDisplay()
+  return currentLayout[currentDisplay:getUUID()]
+end
+
+function setLayoutForCurrentDisplay(id)
+  currentLayout[currentDisplay:getUUID()] = id
+end
 
 function changeToSpace(idx)
   if idx < 0 then
@@ -311,9 +322,9 @@ function changeToSpace(idx)
     idx = 1
   end
 
-  currentLayout = idx
+  setLayoutForCurrentDisplay(idx)
 
-  print("Go to space #", currentLayout)
+  print("Go to space # " .. idx .. " on screen " .. currentDisplay:name())
   local screen = currentDisplay:getUUID()
   local space = spaceRegistry[screen][idx]
   hs.spaces.gotoSpace(space)
@@ -328,14 +339,15 @@ function moveToSpace(idx)
     idx = 0
   end
 
-  print("Move to space #", idx)
   local screen = currentDisplay:getUUID()
   local space = spaceRegistry[screen][idx]
-  hs.spaces.moveWindowToSpace(hs.window.focusedWindow(), space)
+  local win = hs.window.focusedWindow()
+  hs.spaces.moveWindowToSpace(win, space)
+  print("Move window " .. win:title() .. " to space " .. idx .. " on screen " .. currentDisplay:name())
 end
 
-hs.hotkey.bind("alt", "d", function() changeToSpace(currentLayout - 1)  end)
-hs.hotkey.bind("alt", "n", function() changeToSpace(currentLayout + 1)  end)
+hs.hotkey.bind("alt", "d", function() changeToSpace(layoutForCurrentDisplay() - 1)  end)
+hs.hotkey.bind("alt", "n", function() changeToSpace(layoutForCurrentDisplay() + 1)  end)
 
 hs.hotkey.bind("alt", "&", function() changeToSpace(1)  end)
 hs.hotkey.bind("alt", "[", function() changeToSpace(2)  end)
@@ -348,6 +360,7 @@ hs.hotkey.bind("alt", ")", function() changeToSpace(8)  end)
 hs.hotkey.bind("alt", "+", function() changeToSpace(9)  end)
 hs.hotkey.bind("alt", "]", function() changeToSpace(10) end)
 
+-- TODO look up why keys arent working, maybe need to use COMMAND key
 hs.hotkey.bind({"ctrl", "alt"}, "&", function() moveToSpace(1)  end)
 hs.hotkey.bind({"ctrl", "alt"}, "[", function() moveToSpace(2)  end)
 hs.hotkey.bind({"ctrl", "alt"}, "{", function() moveToSpace(3)  end)
