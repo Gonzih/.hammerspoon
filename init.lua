@@ -205,6 +205,8 @@ function layouts()
       { name="Telegram Desktop", screen=1 },
       { name="Telegram", screen=1 },
       { name="Signal", screen=1 },
+      { name="FaceTime", screen=1 },
+      { name="Messages", screen=1 },
     },
     {
       { name="Notion", screen=1 },
