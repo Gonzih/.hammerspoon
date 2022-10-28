@@ -412,8 +412,13 @@ function moveToScreen(n)
   centerMouseOnScreen(screen)
 end
 
-hs.hotkey.bind("alt", ";", function() focusScreen(1)  end)
-hs.hotkey.bind("alt", ",", function() focusScreen(2)  end)
+hs.screen.watcher.new(function()
+    hs.alert.show("Scheen change detected")
+    gotoDisplay(1)
+end):start()
+
+hs.hotkey.bind("alt", ",", function() focusScreen(1)  end)
+hs.hotkey.bind("alt", ";", function() focusScreen(2)  end)
 hs.hotkey.bind("alt", ".", function() focusScreen(3)  end)
 
 hs.hotkey.bind({"alt", "ctrl"}, ";", function() moveToScreen(1)  end)
