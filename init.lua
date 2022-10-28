@@ -393,10 +393,12 @@ function targetSpace(n)
 end
 
 function focusScreen(n)
+  local screen = getDisplay(n)
   local fspace = targetSpace(n)
-  hs.alert.show("Focus space " .. fspace .. " with n " .. n)
-  hs.spaces.gotoSpace(fspace)
+  hs.alert.show("Focus  " .. screen:name())
   gotoDisplay(n)
+  hs.spaces.gotoSpace(fspace)
+  focusWindowN(0)
 end
 
 function moveToScreen(n)
