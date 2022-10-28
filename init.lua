@@ -38,8 +38,24 @@ end)
 hs.alert.show("Config loaded")
 
 -- ============ BASICS ============
+
 function builtinDisplay()
   return hs.screen.find("built.in retina display")
+end
+
+currentDisplay = builtinDisplay()
+
+function getDisplay(n)
+  local screen = builtinDisplay()
+  for i = 2,n do
+    screen = screen:next()
+  end
+
+  return screen
+end
+
+function gotoDisplay(n)
+  currentDisplay = getDisplay(n)
 end
 
 function visibleSpaceWindowsFilter()
@@ -252,7 +268,7 @@ function moveWindowsToSpaces()
   local running_apps = hs.application.runningApplications()
 
   for i, layout in ipairs(layouts()) do
-    local screen = builtinDisplay()
+    local screen = currentDisplay
     local screenid = screen:getUUID()
 
     for _, appname in ipairs(layout) do
@@ -279,6 +295,11 @@ moveWindowsToSpaces()
 ftr = hs.window.filter.new(true)
 -- ftr:subscribe(hs.window.filter.windowCreated, moveWindowsToSpaces)
 
+hs.hotkey.bind({"alt", "ctrl"}, "M", function()
+    hs.alert.show("Shuffling windows on " .. currentDisplay:name())
+    moveWindowsToSpaces()
+end)
+
 currentLayout = 1
 
 function changeToSpace(idx)
@@ -293,7 +314,7 @@ function changeToSpace(idx)
   currentLayout = idx
 
   print("Go to space #", currentLayout)
-  local screen = hs.screen.mainScreen():getUUID()
+  local screen = currentDisplay:getUUID()
   local space = spaceRegistry[screen][idx]
   hs.spaces.gotoSpace(space)
 end
@@ -308,7 +329,7 @@ function moveToSpace(idx)
   end
 
   print("Move to space #", idx)
-  local screen = hs.screen.mainScreen():getUUID()
+  local screen = currentDisplay:getUUID()
   local space = spaceRegistry[screen][idx]
   hs.spaces.moveWindowToSpace(hs.window.focusedWindow(), space)
 end
@@ -338,23 +359,21 @@ hs.hotkey.bind({"ctrl", "alt"}, ")", function() moveToSpace(8)  end)
 hs.hotkey.bind({"ctrl", "alt"}, "+", function() moveToSpace(9)  end)
 hs.hotkey.bind({"ctrl", "alt"}, "]", function() moveToSpace(10) end)
 
-function targetSpace(id)
-  local screen = builtinDisplay()
-  for i = 2,id do
-    screen = screen:next()
-  end
+function targetSpace(n)
+  local screen = getDisplay(n)
   return hs.spaces.activeSpaceOnScreen(screen:getUUID())
 end
 
-function focusScreen(id)
-  local fspace = targetSpace(id)
-  hs.alert.show("Focus space " .. fspace .. " with id " .. id)
+function focusScreen(n)
+  local fspace = targetSpace(n)
+  hs.alert.show("Focus space " .. fspace .. " with n " .. n)
   hs.spaces.gotoSpace(fspace)
+  gotoDisplay(n)
 end
 
-function moveToScreen(id)
-  local fspace = targetSpace(id)
-  hs.alert.show("Focus space " .. fspace .. " with id " .. id)
+function moveToScreen(n)
+  local fspace = targetSpace(n)
+  hs.alert.show("Focus space " .. fspace .. " with n " .. n)
   hs.spaces.moveWindowToSpace(hs.window.focusedWindow(), fspace)
 end
 
