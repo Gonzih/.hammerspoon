@@ -199,15 +199,20 @@ function layouts()
     },
     {
       "Mail",
+      "Calendar",
     },
     {
       "Telegram Desktop",
+      "Telegram",
       "Signal",
     },
     {
       "Notion",
     },
-    {},
+    {
+      "Slack",
+      "Discord",
+    },
     {},
     {
       "Terminal",
