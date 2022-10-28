@@ -195,42 +195,42 @@ function layouts()
   return {
     {},
     {
-      "Spotify",
+      { name="Spotify", screen=1 },
     },
     {
-      "Mail",
-      "Calendar",
+      { name="Calendar", screen=1 },
+      { name="Mail", screen=1 },
     },
     {
-      "Telegram Desktop",
-      "Telegram",
-      "Signal",
+      { name="Telegram Desktop", screen=1 },
+      { name="Telegram", screen=1 },
+      { name="Signal", screen=1 },
     },
     {
-      "Notion",
+      { name="Notion", screen=1 },
     },
     {
-      "Slack",
-      "Discord",
+      { name="Slack", screen=1 },
+      { name="Discord", screen=1 },
     },
     {},
     {
-      "Terminal",
+      { name="Terminal", screen=2 },
     },
     {
-      "Emacs",
+      { name="Emacs", screen=2 },
     },
     {
-      "Brave Browser",
+      { name="Brave Browser", screen=1 },
     },
   }
 end
 
 function layoutFor(name)
   for i, layout in ipairs(layouts()) do
-    for _, winName in ipairs(layout) do
-      if winName == name  then
-        return i
+    for _, cfg in ipairs(layout) do
+      if cfg.name == name  then
+        return {layout=i, screen=cfg.screen}
       end
     end
   end
@@ -306,9 +306,14 @@ function moveWindowsToSpaces()
   local screenid = screen:getUUID()
 
   for _, app in ipairs(running_apps) do
-    local i = layoutFor(app:name())
+    local cfg = layoutFor(app:name())
 
-    if i then
+    if cfg then
+      local i = cfg.layout
+      if cfg.screen then
+        screen = getDisplay(cfg.screen)
+        screenid = screen:getUUID()
+      end
       local windows = app:allWindows()
 
       for _, win in ipairs(windows) do
@@ -427,10 +432,11 @@ function moveToScreen(n)
   local screenid = screen:getUUID()
   local fspace = targetSpace(n)
   local win = hs.window.focusedWindow()
-  local layoutIdx = layoutFor(win:application():name())
+  local cfg = layoutFor(win:application():name())
   print("fspace " .. fspace)
 
-  if layoutIdx then
+  if cfg then
+    local layoutIdx = cfg.layout
     fspace = spaceRegistry[screenid][layoutIdx]
     print("Found layout idx " .. layoutIdx .. " for " .. win:application():name() .. " fspace #" .. fspace)
   end
