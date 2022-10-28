@@ -372,6 +372,8 @@ end
 
 hs.hotkey.bind("alt", "d", function() changeToSpace(layoutForCurrentDisplay() - 1)  end)
 hs.hotkey.bind("alt", "n", function() changeToSpace(layoutForCurrentDisplay() + 1)  end)
+hs.hotkey.bind({"alt", "ctrl"}, "d", function() moveToSpace(layoutForCurrentDisplay() - 1)  end)
+hs.hotkey.bind({"alt", "ctrl"}, "n", function() moveToSpace(layoutForCurrentDisplay() + 1)  end)
 
 hs.hotkey.bind("alt", "&", function() changeToSpace(1)  end)
 hs.hotkey.bind("alt", "[", function() changeToSpace(2)  end)
@@ -410,6 +412,7 @@ function focusScreen(n)
   focusWindowN(0)
 end
 
+-- TODO maybe move to specific workspace on screen and then focus this workspace
 function moveToScreen(n)
   local screen = getDisplay(n)
   local fspace = targetSpace(n)
