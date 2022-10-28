@@ -74,10 +74,8 @@ function visibleSpaceWindowsFilter()
       -- :setScreens(currentDisplay:getUUID())
 end
 
-hs.hotkey.bind({"alt"}, "f", function()
-    local win = hs.window.focusedWindow()
+function fullscreenWindow(win, screen)
     local f = win:frame()
-    local screen = win:screen()
     local max = screen:frame()
 
     f.x = max.x
@@ -86,6 +84,12 @@ hs.hotkey.bind({"alt"}, "f", function()
     f.h = max.h
     win:setFrame(f)
     hs.alert.show("Fullscreen " .. win:application():name())
+end
+
+hs.hotkey.bind({"alt"}, "f", function()
+    local win = hs.window.focusedWindow()
+    local screen = win:screen()
+    fullscreenWindow(win, screen)
 end)
 
 hs.hotkey.bind("alt", "return", function() hs.application.launchOrFocus("Terminal") end)
@@ -294,7 +298,7 @@ function moveWindowsToSpaces()
 
           for _, win in ipairs(windows) do
             local spaceid = spaceRegistry[screenid][i]
-            print("Moving ", win:application():name(), spaceid)
+            print("Moving " .. win:application():name() .. " to " .. spaceid)
             hs.spaces.moveWindowToSpace(win, spaceid)
           end
         end
@@ -410,6 +414,7 @@ function moveToScreen(n)
   hs.spaces.gotoSpace(fspace)
   win:focus()
   centerMouseOnScreen(screen)
+  fullscreenWindow(win, screen)
 end
 
 hs.screen.watcher.new(function()
