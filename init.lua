@@ -39,14 +39,20 @@ hs.alert.show("Config loaded")
 
 -- ============ BASICS ============
 
-function builtinDisplay()
-  return hs.screen.find("built.in retina display")
+function mainDisplay()
+  local screen = hs.screen.find("built.in retina display")
+
+  if not screen then
+    screen = hs.screen.mainScreen()
+  end
+
+  return screen
 end
 
-currentDisplay = builtinDisplay()
+currentDisplay = mainDisplay()
 
 function getDisplay(n)
-  local screen = builtinDisplay()
+  local screen = mainDisplay()
   for i = 2,n do
     screen = screen:next()
   end
@@ -56,6 +62,7 @@ end
 
 function gotoDisplay(n)
   currentDisplay = getDisplay(n)
+  centerMouseOnScreen(currentDisplay)
 end
 
 function visibleSpaceWindowsFilter()
@@ -64,6 +71,7 @@ function visibleSpaceWindowsFilter()
       :setAppFilter('Finder',{visible=true})
       :setSortOrder(hs.window.filter.sortByCreated)
       :setCurrentSpace(true)
+      -- :setScreens(currentDisplay:getUUID())
 end
 
 hs.hotkey.bind({"alt"}, "f", function()
@@ -115,11 +123,18 @@ hs.hotkey.bind({"alt"}, "space", function()
 end)
 
 -- ============ WINDOW SWITCHING ============
-function centerMouseOnWindow(window)
-  local pt = hs.geometry.rectMidPoint(window:frame())
+function centerMouseOnFrame(frame)
+  local pt = hs.geometry.rectMidPoint(frame)
   hs.mouse.absolutePosition(pt)
 end
 
+function centerMouseOnWindow(window)
+  centerMouseOnFrame(window:frame())
+end
+
+function centerMouseOnScreen(screen)
+  centerMouseOnFrame(screen:frame())
+end
 
 focusIndex = 1
 
@@ -390,6 +405,9 @@ function moveToScreen(n)
   local win = hs.window.focusedWindow()
   hs.alert.show("Move win " .. win:title() .. " to " .. screen:name())
   hs.spaces.moveWindowToSpace(win, fspace)
+  hs.spaces.gotoSpace(fspace)
+  win:focus()
+  centerMouseOnScreen(screen)
 end
 
 hs.hotkey.bind("alt", ";", function() focusScreen(1)  end)
