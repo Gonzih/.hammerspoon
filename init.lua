@@ -226,6 +226,18 @@ function layouts()
   }
 end
 
+function layoutFor(name)
+  for i, layout in ipairs(layouts()) do
+    for _, winName in ipairs(layout) do
+      if winName == name  then
+        return i
+      end
+    end
+  end
+
+  return nil
+end
+
 spaceRegistry = {}
 
 function registerSpaces()
@@ -290,23 +302,19 @@ end
 
 function moveWindowsToSpaces()
   local running_apps = hs.application.runningApplications()
+  local screen = currentDisplay
+  local screenid = screen:getUUID()
 
-  for i, layout in ipairs(layouts()) do
-    local screen = currentDisplay
-    local screenid = screen:getUUID()
+  for _, app in ipairs(running_apps) do
+    local i = layoutFor(app:name())
 
-    for _, appname in ipairs(layout) do
-      for _, app in ipairs(running_apps) do
+    if i then
+      local windows = app:allWindows()
 
-        if app:name() == appname then
-          local windows = app:allWindows()
-
-          for _, win in ipairs(windows) do
-            local spaceid = spaceRegistry[screenid][i]
-            print("Moving " .. win:application():name() .. " to " .. spaceid)
-            hs.spaces.moveWindowToSpace(win, spaceid)
-          end
-        end
+      for _, win in ipairs(windows) do
+        local spaceid = spaceRegistry[screenid][i]
+        print("Moving " .. win:application():name() .. " to " .. spaceid)
+        hs.spaces.moveWindowToSpace(win, spaceid)
       end
     end
   end
@@ -348,9 +356,9 @@ function changeToSpace(idx)
 
   setLayoutForCurrentDisplay(idx)
 
-  print("Go to space # " .. idx .. " on screen " .. currentDisplay:name())
   local screen = currentDisplay:getUUID()
   local space = spaceRegistry[screen][idx]
+  print("Go to space # " .. idx .. " (" .. space  .. ") " .. " on screen " .. currentDisplay:name())
   hs.spaces.gotoSpace(space)
 end
 
@@ -412,17 +420,30 @@ function focusScreen(n)
   focusWindowN(0)
 end
 
--- TODO maybe move to specific workspace on screen and then focus this workspace
 function moveToScreen(n)
+  gotoDisplay(n)
+
   local screen = getDisplay(n)
+  local screenid = screen:getUUID()
   local fspace = targetSpace(n)
   local win = hs.window.focusedWindow()
-  hs.alert.show("Move win " .. win:title() .. " to " .. screen:name())
-  hs.spaces.moveWindowToSpace(win, fspace)
+  local layoutIdx = layoutFor(win:application():name())
+  print("fspace " .. fspace)
+
+  if layoutIdx then
+    fspace = spaceRegistry[screenid][layoutIdx]
+    print("Found layout idx " .. layoutIdx .. " for " .. win:application():name() .. " fspace #" .. fspace)
+  end
+
   hs.spaces.gotoSpace(fspace)
-  win:focus()
-  centerMouseOnScreen(screen)
-  fullscreenWindow(win, screen)
+  hs.timer.doAfter(0.5,
+                   function()
+                     hs.spaces.moveWindowToSpace(win, fspace)
+                     win:focus()
+                     fullscreenWindow(win, screen)
+                     centerMouseOnScreen(screen)
+                     hs.alert.show("Move win " .. win:application():name() .. " to " .. screen:name())
+                   end)
 end
 
 hs.screen.watcher.new(function()
