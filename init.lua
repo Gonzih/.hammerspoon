@@ -330,7 +330,7 @@ registerSpaces()
 moveWindowsToSpaces()
 
 ftr = hs.window.filter.new(true)
--- ftr:subscribe(hs.window.filter.windowCreated, moveWindowsToSpaces)
+ftr:subscribe(hs.window.filter.windowCreated, moveWindowsToSpaces)
 
 hs.hotkey.bind({"alt", "ctrl"}, "M", function()
     hs.alert.show("Shuffling windows on " .. currentDisplay:name())
