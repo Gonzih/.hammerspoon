@@ -217,13 +217,13 @@ function layouts()
     },
     {},
     {
-      { name="Terminal", screen=2 },
+      { name="Terminal", screen=1 },
     },
     {
       { name="Emacs", screen=2 },
     },
     {
-      { name="Brave Browser", screen=1 },
+      { name="Brave Browser", screen=2 },
     },
   }
 end
