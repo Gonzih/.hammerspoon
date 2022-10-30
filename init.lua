@@ -241,16 +241,15 @@ function layoutFor(name)
   return nil
 end
 
+local globalSpaceNames = hs.spaces.missionControlSpaceNames()
 spaceRegistry = {}
 
 function registerSpaces()
-  local spaces = hs.spaces.missionControlSpaceNames()
-
   print("------------SPACES-------------")
   print("MISSION CONTROL SPACE NAMES")
   print(dump(spaces))
 
-  for screenID, screenSpaces in pairs(spaces) do
+  for screenID, screenSpaces in pairs(globalSpaceNames) do
     local spaceNumToID = {}
     print(screenID)
 
@@ -270,6 +269,7 @@ function registerSpaces()
       end
       if not spaceRegistry[screenID][spaceNum] then
         spaceRegistry[screenID][spaceNum] = spaceID
+        print(string.format("space number %d = id %d = %s", spaceNum, spaceID, globalSpaceNames[screenID][spaceID]))
       end
     end
   end
@@ -278,7 +278,7 @@ function registerSpaces()
   print("REGISTRY")
   print(dump(spaceRegistry))
 
-  for id, spaces in pairs(hs.spaces.missionControlSpaceNames()) do
+  for id, spaces in pairs(globalSpaceNames) do
     print(id .. " has #" .. dlen(spaces) .. " spaces")
   end
 
@@ -288,9 +288,8 @@ end
 function initSpaces()
   local limit = 10
   print("Init spaces")
-  local spaces = hs.spaces.missionControlSpaceNames()
 
-  for id, screenSpaces in pairs(spaces) do
+  for id, screenSpaces in pairs(globalSpaceNames) do
     local diff = limit - dlen(screenSpaces)
 
     print("Need to create #", diff, " spaces for ", id)
@@ -303,7 +302,6 @@ function initSpaces()
 end
 
 function moveWindowsToSpaces()
-  local spaces = hs.spaces.missionControlSpaceNames()
   local running_apps = hs.application.runningApplications()
   local screen = currentDisplay
   local screenid = screen:getUUID()
@@ -321,7 +319,7 @@ function moveWindowsToSpaces()
 
       for _, win in ipairs(windows) do
         local spaceid = spaceRegistry[screenid][i]
-        local spaceName = spaces[screenid][spaceid]
+        local spaceName = globalSpaceNames[screenid][spaceid]
         print("Moving " .. win:application():name() .. " to " .. spaceid .. " based on i " .. i .. " named " .. spaceName)
         hs.spaces.moveWindowToSpace(win, spaceid)
       end
