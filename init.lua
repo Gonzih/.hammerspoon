@@ -210,6 +210,7 @@ function layouts()
     },
     {
       { name="Notion", screen=1 },
+      { name="Notes", screen=1 },
     },
     {
       { name="Slack", screen=1 },
@@ -260,7 +261,9 @@ function registerSpaces()
     end
 
     table.sort(spaceNames)
+    print("SPACE NAMES")
     print(dump(spaceNames))
+    print("SPACE NAME TO ID")
     print(dump(spaceNameToID))
 
     for i, spaceName in ipairs(spaceNames) do
@@ -276,9 +279,11 @@ function registerSpaces()
   end
 
 
+  print("REGISTRY")
   print(dump(spaceRegistry))
+
   for id, spaces in pairs(hs.spaces.missionControlSpaceNames()) do
-    print(id, "has #", dlen(spaces), "spaces")
+    print(id .. " has #" .. dlen(spaces) .. " spaces")
   end
 
   print("------------END SPACES-------------")
@@ -320,7 +325,7 @@ function moveWindowsToSpaces()
 
       for _, win in ipairs(windows) do
         local spaceid = spaceRegistry[screenid][i]
-        print("Moving " .. win:application():name() .. " to " .. spaceid)
+        print("Moving " .. win:application():name() .. " to " .. spaceid .. " based on i " .. i)
         hs.spaces.moveWindowToSpace(win, spaceid)
       end
     end
